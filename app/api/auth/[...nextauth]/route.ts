@@ -24,7 +24,7 @@ const supabaseAuth = createClient(
   }
 );
 
-export const authOptions: NextAuthOptions = {
+const authOptions: NextAuthOptions = {
   providers: [
     // 邮箱 + 密码登录
     CredentialsProvider({
