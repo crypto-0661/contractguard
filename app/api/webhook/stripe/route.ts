@@ -30,28 +30,28 @@ export async function POST(request: NextRequest) {
     // 处理不同事件类型
     switch (event.type) {
       case 'checkout.session.completed': {
-        await handleCheckoutCompleted(event.data.object);
+        await handleCheckoutCompleted(event.data.object as Record<string, unknown>);
         break;
       }
 
       case 'customer.subscription.created':
       case 'customer.subscription.updated': {
-        await handleSubscriptionUpdated(event.data.object);
+        await handleSubscriptionUpdated(event.data.object as Record<string, unknown>);
         break;
       }
 
       case 'customer.subscription.deleted': {
-        await handleSubscriptionDeleted(event.data.object);
+        await handleSubscriptionDeleted(event.data.object as Record<string, unknown>);
         break;
       }
 
       case 'invoice.payment_succeeded': {
-        await handleInvoicePaymentSucceeded(event.data.object);
+        await handleInvoicePaymentSucceeded(event.data.object as Record<string, unknown>);
         break;
       }
 
       case 'invoice.payment_failed': {
-        await handleInvoicePaymentFailed(event.data.object);
+        await handleInvoicePaymentFailed(event.data.object as Record<string, unknown>);
         break;
       }
 
