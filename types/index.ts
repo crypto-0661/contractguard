@@ -115,7 +115,7 @@ export interface IndustryCompliance {
 
 /** 风险分布 */
 export interface RiskDistribution {
-  [key: string]: unknown;
+  [key: string]: number;
   liability: number;
   payment: number;
   termination: number;
