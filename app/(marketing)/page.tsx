@@ -25,7 +25,7 @@ export default function LandingPage() {
               Built for the 33 million small businesses that can't afford a lawyer for every document.
             </p>
             <div className="flex flex-wrap gap-4">
-              <Link href="/app" className="inline-flex items-center gap-2 bg-white text-blue-700 font-semibold px-8 py-4 rounded-lg hover:bg-blue-50 transition shadow-lg">
+              <Link href="/app/dashboard" className="inline-flex items-center gap-2 bg-white text-blue-700 font-semibold px-8 py-4 rounded-lg hover:bg-blue-50 transition shadow-lg">
                 Start Free Trial →
               </Link>
               <Link href="#features" className="inline-flex items-center gap-2 border-2 border-white/30 text-white font-semibold px-8 py-4 rounded-lg hover:bg-white/10 transition">
@@ -119,7 +119,7 @@ export default function LandingPage() {
       <section className="py-24 bg-gradient-to-r from-blue-600 to-indigo-700 text-white text-center px-6">
         <h2 className="text-3xl md:text-4xl font-bold mb-4">Ready to Stop Worrying About Contracts?</h2>
         <p className="text-blue-100 text-lg mb-8 max-w-xl mx-auto">Join thousands of small business owners who review contracts with confidence.</p>
-        <Link href="/app" className="inline-flex bg-white text-blue-700 font-semibold px-10 py-4 rounded-lg hover:bg-blue-50 transition shadow-lg text-lg">
+        <Link href="/app/dashboard" className="inline-flex bg-white text-blue-700 font-semibold px-10 py-4 rounded-lg hover:bg-blue-50 transition shadow-lg text-lg">
           Get Started Free →
         </Link>
       </section>

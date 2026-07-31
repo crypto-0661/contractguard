@@ -44,13 +44,13 @@ export default function Navbar({ user }: NavbarProps) {
           {/* Desktop Nav Links */}
           <div className="hidden md:flex items-center gap-8">
             <Link
-              href="/dashboard"
+              href="/app/dashboard"
               className="text-sm font-medium text-gray-600 hover:text-brand-600 transition-colors"
             >
               Dashboard
             </Link>
             <Link
-              href="/upload"
+              href="/app/upload"
               className="text-sm font-medium text-gray-600 hover:text-brand-600 transition-colors"
             >
               Upload Contract
@@ -90,14 +90,14 @@ export default function Navbar({ user }: NavbarProps) {
                         <p className="text-xs text-gray-500">{user?.email}</p>
                       </div>
                       <Link
-                        href="/dashboard"
+                        href="/app/dashboard"
                         className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
                         onClick={() => setUserMenuOpen(false)}
                       >
                         Dashboard
                       </Link>
                       <Link
-                        href="/settings"
+                        href="/app/settings"
                         className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
                         onClick={() => setUserMenuOpen(false)}
                       >
@@ -156,14 +156,14 @@ export default function Navbar({ user }: NavbarProps) {
         <div className="md:hidden border-t border-gray-100 bg-white animate-slide-up">
           <div className="px-4 py-4 space-y-3">
             <Link
-              href="/dashboard"
+              href="/app/dashboard"
               className="block text-sm font-medium text-gray-600 hover:text-brand-600 py-2"
               onClick={() => setMobileMenuOpen(false)}
             >
               Dashboard
             </Link>
             <Link
-              href="/upload"
+              href="/app/upload"
               className="block text-sm font-medium text-gray-600 hover:text-brand-600 py-2"
               onClick={() => setMobileMenuOpen(false)}
             >

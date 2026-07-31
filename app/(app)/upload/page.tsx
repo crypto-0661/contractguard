@@ -7,7 +7,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import ContractUploader from '../../../components/ContractUploader';
+import ContractUploader from '../../components/ContractUploader';
 
 export default function UploadPage() {
   const router = useRouter();
