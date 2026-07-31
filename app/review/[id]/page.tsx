@@ -8,9 +8,9 @@
 import { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
-import RiskDashboard from '../components/RiskDashboard';
-import ClauseHighlighter from '../components/ClauseHighlighter';
-import SummaryCard from '../components/SummaryCard';
+import RiskDashboard from '../../components/RiskDashboard';
+import ClauseHighlighter from '../../components/ClauseHighlighter';
+import SummaryCard from '../../components/SummaryCard';
 import type { ReviewResult } from '@/types';
 
 type TabType = 'overview' | 'risks' | 'contract' | 'negotiation';
