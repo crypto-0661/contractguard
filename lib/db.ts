@@ -4,7 +4,6 @@
  */
 
 import { createClient } from '@supabase/supabase-js';
-import type { Database } from '@/types';
 
 // ============================================================
 // Supabase 客户端初始化
