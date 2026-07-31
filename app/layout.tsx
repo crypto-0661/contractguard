@@ -5,19 +5,11 @@
 
 import type { Metadata } from 'next';
 import './globals.css';
-import Navbar from './components/Navbar';
 
 export const metadata: Metadata = {
-  title: 'ContractGuard — AI-Powered Contract Review for Small Businesses',
+  title: 'clausescan — AI-Powered Contract Review for Small Businesses',
   description:
-    'Catch hidden risks before you sign. AI-powered contract review built for America\'s 33 million small businesses.',
-  keywords: 'contract review, AI contract analysis, small business legal, risk assessment',
-  openGraph: {
-    title: 'ContractGuard — AI-Powered Contract Review',
-    description: 'Catch hidden risks before you sign. Upload your contract and get AI-powered analysis in minutes.',
-    type: 'website',
-    url: 'https://contractguard.com',
-  },
+    'Catch hidden risks before you sign. AI-powered contract review built for small businesses.',
 };
 
 export default function RootLayout({
@@ -35,9 +27,8 @@ export default function RootLayout({
           rel="stylesheet"
         />
       </head>
-      <body className="min-h-screen bg-gray-50 font-sans antialiased">
-        <Navbar />
-        <main className="pt-16">{children}</main>
+      <body className="min-h-screen font-sans antialiased">
+        {children}
       </body>
     </html>
   );
