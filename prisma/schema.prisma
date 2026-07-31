@@ -1,0 +1,132 @@
+// ContractGuard - Prisma 数据库 Schema
+// 功能：定义所有数据库模型、关系和索引
+// 数据库：PostgreSQL (Supabase)
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================================
+// 枚举类型
+// ============================================================
+
+enum PlanType {
+  free
+  starter
+  pro
+  business
+}
+
+enum ContractStatus {
+  pending
+  processing
+  completed
+  failed
+}
+
+enum SubscriptionStatus {
+  active
+  canceled
+  past_due
+  trialing
+  incomplete
+}
+
+// ============================================================
+// 用户表
+// ============================================================
+
+model User {
+  id               String         @id @default(uuid()) @db.Uuid
+  email            String         @unique @db.VarChar(255)
+  name             String?        @db.VarChar(255)
+  avatarUrl        String?        @map("avatar_url") @db.Text
+  stripeCustomerId String?        @map("stripe_customer_id") @db.VarChar(255)
+  plan             PlanType       @default(free)
+  createdAt        DateTime       @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt        DateTime       @updatedAt @map("updated_at") @db.Timestamptz()
+
+  contracts     Contract[]
+  subscriptions Subscription[]
+
+  @@map("User")
+}
+
+// ============================================================
+// 合同表
+// ============================================================
+
+model Contract {
+  id        String         @id @default(uuid()) @db.Uuid
+  userId    String         @map("user_id") @db.Uuid
+  fileName  String         @map("file_name") @db.VarChar(500)
+  fileUrl   String         @map("file_url") @db.Text
+  fileSize  Int?           @map("file_size")
+  fileType  String?        @map("file_type") @db.VarChar(50)
+  pageCount Int?           @map("page_count") @default(0)
+  status    ContractStatus @default(pending)
+  riskScore Float?         @map("risk_score") @db.Decimal(3, 1)
+  createdAt DateTime       @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt DateTime       @updatedAt @map("updated_at") @db.Timestamptz()
+
+  user   User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  review Review?
+
+  @@index([userId])
+  @@index([status])
+  @@index([createdAt(sort: Desc)])
+  @@map("Contract")
+}
+
+// ============================================================
+// 审阅结果表
+// ============================================================
+
+model Review {
+  id                 String   @id @default(uuid()) @db.Uuid
+  contractId         String   @unique @map("contract_id") @db.Uuid
+  summary            String?  @db.Text
+  overallScore       Float    @map("overall_score") @db.Decimal(3, 1)
+  risks              Json     @default("[]")
+  recommendations    Json     @default("[]")
+  missingClauses     Json     @default("[]") @map("missing_clauses")
+  negotiationTips    Json     @default("[]") @map("negotiation_tips")
+  industryCompliance Json     @default("{}") @map("industry_compliance")
+  riskDistribution   Json     @default("{}") @map("risk_distribution")
+  rawAiResponse      String?  @map("raw_ai_response") @db.Text
+  createdAt          DateTime @default(now()) @map("created_at") @db.Timestamptz()
+
+  contract Contract @relation(fields: [contractId], references: [id], onDelete: Cascade)
+
+  @@map("Review")
+}
+
+// ============================================================
+// 订阅表
+// ============================================================
+
+model Subscription {
+  id                   String             @id @default(uuid()) @db.Uuid
+  userId               String             @map("user_id") @db.Uuid
+  stripeSubscriptionId String?            @unique @map("stripe_subscription_id") @db.VarChar(255)
+  stripePriceId        String?            @map("stripe_price_id") @db.VarChar(255)
+  plan                 PlanType           @default(starter)
+  status               SubscriptionStatus @default(incomplete)
+  currentPeriodStart   DateTime?          @map("current_period_start") @db.Timestamptz()
+  currentPeriodEnd     DateTime?          @map("current_period_end") @db.Timestamptz()
+  cancelAtPeriodEnd    Boolean            @default(false) @map("cancel_at_period_end")
+  createdAt            DateTime           @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt            DateTime           @updatedAt @map("updated_at") @db.Timestamptz()
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([stripeSubscriptionId])
+  @@index([status])
+  @@map("Subscription")
+}
