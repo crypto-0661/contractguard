@@ -5,17 +5,8 @@
 
 'use client';
 
-import type { ReviewResult, RiskDistribution, RISK_CATEGORY_LABELS } from '@/types';
-import { RiskCategory } from '@/types';
-
-const RISK_CATEGORY_LABELS: Record<string, string> = {
-  liability: 'Liability',
-  payment: 'Payment',
-  termination: 'Termination',
-  intellectual_property: 'IP',
-  confidentiality: 'Confidentiality',
-  non_compete: 'Non-Compete',
-};
+import type { ReviewResult, RiskDistribution } from '@/types';
+import { RISK_CATEGORY_LABELS } from '@/types';
 
 const CATEGORY_COLORS: Record<string, string> = {
   liability: '#ef4444',
