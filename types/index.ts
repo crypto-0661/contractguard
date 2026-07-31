@@ -105,6 +105,7 @@ export interface NegotiationTip {
 
 /** 行业合规检查 */
 export interface IndustryCompliance {
+  [key: string]: unknown;
   industry: string;
   standards: string[];
   compliant: boolean;
@@ -114,6 +115,7 @@ export interface IndustryCompliance {
 
 /** 风险分布 */
 export interface RiskDistribution {
+  [key: string]: unknown;
   liability: number;
   payment: number;
   termination: number;
