@@ -27,7 +27,8 @@ let anthropicClient: Anthropic | null = null;
 function getOpenAIClient(): OpenAI {
   if (!openaiClient) {
     openaiClient = new OpenAI({
-      apiKey: process.env.OPENAI_API_KEY || '',
+      apiKey: process.env.OPENAI_API_KEY || process.env.DEEPSEEK_API_KEY || '',
+      baseURL: process.env.OPENAI_BASE_URL || 'https://api.deepseek.com',
     });
   }
   return openaiClient;
