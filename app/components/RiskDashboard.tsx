@@ -148,7 +148,7 @@ export default function RiskDashboard({ review, contractName }: RiskDashboardPro
             ([category, count]) => (
               <div key={category} className="flex items-center gap-3">
                 <span className="w-24 text-xs font-medium text-gray-600 text-right flex-shrink-0">
-                  {RISK_CATEGORY_LABELS[category] || category}
+                  {RISK_CATEGORY_LABELS[category as keyof typeof RISK_CATEGORY_LABELS] || category}
                 </span>
                 <div className="flex-1 h-6 bg-gray-100 rounded-full overflow-hidden">
                   <div
