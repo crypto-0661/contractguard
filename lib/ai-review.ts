@@ -186,22 +186,17 @@ async function analyzeWithOpenAI(
     ? '\n\nCRITICAL: Your previous output failed to parse as valid JSON. Respond with ONLY a single valid JSON object. No markdown fences, no code blocks, no explanations, no trailing commas.'
     : '';
 
-  const response = await openai.chat.completions.create(
-    {
-      model,
-      messages: [
-        { role: 'system', content: SYSTEM_PROMPT },
-        { role: 'user', content: buildUserPrompt(contractText, industry) + strictNote },
-      ],
-      temperature: 0.3, // 低温度以保证一致性
-      max_tokens: 4096, // 关闭思考后输出即答案，4096 足够
-    },
-    {
-      // DeepSeek V4 默认开启思考模式，会占满 token 且极慢；
-      // 必须显式关闭：直接输出答案，速度快且稳定
-      extraBody: { thinking: { type: 'disabled' } },
-    }
-  );
+  const response = await openai.chat.completions.create({
+    model,
+    messages: [
+      { role: 'system', content: SYSTEM_PROMPT },
+      { role: 'user', content: buildUserPrompt(contractText, industry) + strictNote },
+    ],
+    temperature: 0.3, // 低温度以保证一致性
+    max_tokens: 4096, // 关闭思考后输出即答案，4096 足够
+    // DeepSeek V4 扩展参数：关闭思考模式（默认开启会占满 token 且极慢）
+    thinking: { type: 'disabled' },
+  } as any);
 
   const content = response.choices[0]?.message?.content;
   if (!content) {
