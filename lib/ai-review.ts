@@ -124,7 +124,7 @@ export async function analyzeContract(
   console.log(`[AI Review] Starting analysis with ${provider}/${model}`);
   console.log(`[AI Review] Contract text length: ${contractText.length} chars`);
 
-  let rawResponse: string;
+  let rawResponse = '';
   let result: ReviewResult;
 
   try {
