@@ -53,16 +53,31 @@ export async function POST(request: NextRequest) {
 
     // 在业务库中创建用户记录
     if (data.user) {
-      await createUser({
-        id: data.user.id,
-        email: data.user.email || email,
-        name: name || undefined,
-      });
+      try {
+        await createUser({
+          id: data.user.id,
+          email: data.user.email || email,
+          name: name || undefined,
+        });
+      } catch (dbError: any) {
+        // 业务表插入失败 → 回滚已创建的 Auth 用户，避免半注册状态
+        console.error('[Register] DB user creation failed, rolling back auth user:', dbError?.message);
+        try {
+          await supabaseAuth.auth.admin.deleteUser(data.user.id);
+        } catch (rollbackError) {
+          console.error('[Register] Rollback failed:', rollbackError);
+        }
+        throw dbError;
+      }
     }
 
     return NextResponse.json({ success: true, userId: data.user?.id });
-  } catch (error) {
+  } catch (error: any) {
+    // 返回真实错误信息，方便前端直接显示定位
     console.error('[Register] Error:', error);
-    return NextResponse.json({ error: 'Registration failed' }, { status: 500 });
+    return NextResponse.json(
+      { error: error?.message || 'Registration failed' },
+      { status: 500 }
+    );
   }
 }
