@@ -5,21 +5,19 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
-import { cookies } from 'next/headers';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/lib/auth';
 import { v4 as uuidv4 } from 'uuid';
+import { supabaseAdmin } from '@/lib/db';
 import { extractTextFromBuffer, generateFileName, isValidFileType, isValidFileSize } from '@/lib/utils';
 import { createContract, updateContractStatus, checkContractLimit } from '@/lib/db';
 
 export async function POST(request: NextRequest) {
   try {
-    // 认证检查
-    const supabase = createRouteHandlerClient({ cookies });
-    const {
-      data: { session },
-    } = await supabase.auth.getSession();
+    // 认证检查（使用 NextAuth session）
+    const session = await getServerSession(authOptions);
 
-    if (!session?.user) {
+    if (!session?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -80,7 +78,7 @@ export async function POST(request: NextRequest) {
     const storagePath = generateFileName(userId, file.name);
 
     // 上传到 Supabase Storage
-    const { error: uploadError } = await supabase.storage
+    const { error: uploadError } = await supabaseAdmin.storage
       .from('contracts')
       .upload(storagePath, buffer, {
         contentType: file.type,
@@ -96,7 +94,7 @@ export async function POST(request: NextRequest) {
     }
 
     // 获取文件URL
-    const { data: urlData } = await supabase.storage
+    const { data: urlData } = await supabaseAdmin.storage
       .from('contracts')
       .createSignedUrl(storagePath, 3600);
 
