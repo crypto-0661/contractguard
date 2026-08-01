@@ -29,6 +29,7 @@ function getOpenAIClient(): OpenAI {
     openaiClient = new OpenAI({
       apiKey: process.env.OPENAI_API_KEY || process.env.DEEPSEEK_API_KEY || '',
       baseURL: process.env.OPENAI_BASE_URL || 'https://api.deepseek.com',
+      timeout: 50000, // 50s 硬超时，避免撞 Vercel 60s 上限
     });
   }
   return openaiClient;
@@ -84,7 +85,9 @@ IMPORTANT: Return ONLY valid JSON. No markdown fences, no explanations. The JSON
   "negotiationTips": [...],
   "industryCompliance": {...},
   "riskDistribution": {...}
-}`;
+}
+
+Keep the output CONCISE to ensure fast response: maximum 5 risk items, 3 recommendations, 3 missing clauses, and 3 negotiation tips. Keep every text field to 1-2 sentences (under 200 characters each). Do not pad the response.`;
 
 /**
  * 用户提示词模板
@@ -126,6 +129,7 @@ export async function analyzeContract(
 
   let rawResponse = '';
   let result: ReviewResult;
+  const startedAt = Date.now();
 
   try {
     if (provider === 'anthropic') {
@@ -136,19 +140,26 @@ export async function analyzeContract(
 
     result = parseReviewResponse(rawResponse);
   } catch (firstError) {
-    // 首次失败（API异常或解析失败）→ 严格模式重试一次
-    console.error('[AI Review] First attempt failed, retrying in strict mode:', firstError);
-    try {
-      if (provider === 'anthropic') {
-        rawResponse = await analyzeWithClaude(contractText, model, industry, true);
-      } else {
-        rawResponse = await analyzeWithOpenAI(contractText, model, industry, true);
+    const elapsedMs = Date.now() - startedAt;
+
+    // 仅"快速失败"（<30s）时重试；慢响应不重试，避免拖过 Vercel 60s 上限
+    if (elapsedMs < 30000) {
+      console.error('[AI Review] First attempt failed quickly, retrying in strict mode:', firstError);
+      try {
+        if (provider === 'anthropic') {
+          rawResponse = await analyzeWithClaude(contractText, model, industry, true);
+        } else {
+          rawResponse = await analyzeWithOpenAI(contractText, model, industry, true);
+        }
+        result = parseReviewResponse(rawResponse);
+      } catch (retryError) {
+        console.error('[AI Review] Retry also failed:', retryError);
+        console.error('[AI Review] Raw response:', rawResponse.substring(0, 1000));
+        throw new Error('AI review failed after retry. Please try again.');
       }
-      result = parseReviewResponse(rawResponse);
-    } catch (retryError) {
-      console.error('[AI Review] Retry also failed:', retryError);
-      console.error('[AI Review] Raw response:', (rawResponse || '').substring(0, 1000));
-      throw new Error('AI review failed after retry. Please try again.');
+    } else {
+      console.error('[AI Review] Attempt too slow, not retrying:', firstError);
+      throw firstError instanceof Error ? firstError : new Error('AI review failed (too slow)');
     }
   }
 
@@ -181,7 +192,7 @@ async function analyzeWithOpenAI(
       { role: 'user', content: buildUserPrompt(contractText, industry) + strictNote },
     ],
     temperature: 0.3, // 低温度以保证一致性
-    max_tokens: 8192, // 加大输出上限，避免 JSON 被截断
+    max_tokens: 4096, // 压缩输出后足够，保证生成速度
   });
 
   const content = response.choices[0]?.message?.content;
@@ -209,7 +220,7 @@ async function analyzeWithClaude(
 
   const response = await anthropic.messages.create({
     model,
-    max_tokens: 8192,
+    max_tokens: 4096,
     temperature: 0.3,
     system: SYSTEM_PROMPT,
     messages: [
