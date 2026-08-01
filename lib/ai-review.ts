@@ -198,6 +198,9 @@ async function analyzeWithOpenAI(
 
   const content = response.choices[0]?.message?.content;
   if (!content) {
+    // 打印完整响应结构，定位 content 为空的原因
+    console.error('[AI Review] OpenAI returned empty content. Full response:', JSON.stringify(response).substring(0, 3000));
+    console.error('[AI Review] Finish reason:', response.choices[0]?.finish_reason);
     throw new Error('OpenAI returned empty response');
   }
 
