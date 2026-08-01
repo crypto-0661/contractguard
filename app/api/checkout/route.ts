@@ -39,7 +39,7 @@ export async function POST(request: NextRequest) {
         product_id: CREEM_PRODUCTS[productId],
         request_id: userId, // 你的内部用户ID
         customer: email ? { email } : undefined,
-        success_url: `${process.env.NEXT_PUBLIC_APP_URL || 'https://clausescan.co'}/app/dashboard?status=success`,
+        success_url: `${process.env.NEXT_PUBLIC_APP_URL || 'https://clausescan.co'}/dashboard?status=success`,
         cancel_url: `${process.env.NEXT_PUBLIC_APP_URL || 'https://clausescan.co'}/#pricing?status=canceled`,
         metadata: {
           userId,

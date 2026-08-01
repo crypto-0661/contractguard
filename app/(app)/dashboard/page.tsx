@@ -24,7 +24,7 @@ export default function DashboardPage() {
       <div className="bg-white rounded-xl p-8 shadow-sm border border-gray-100 text-center">
         <h2 className="text-xl font-semibold mb-4">Upload Your First Contract</h2>
         <p className="text-gray-500 mb-6">Get AI-powered risk analysis in minutes.</p>
-        <Link href="/app/upload" className="bg-blue-600 text-white px-8 py-3 rounded-lg font-semibold hover:bg-blue-700 transition">Upload Contract →</Link>
+        <Link href="/upload" className="bg-blue-600 text-white px-8 py-3 rounded-lg font-semibold hover:bg-blue-700 transition">Upload Contract →</Link>
       </div>
     </div>
   );
