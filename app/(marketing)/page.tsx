@@ -33,10 +33,10 @@ export default function LandingPage() {
               </Link>
             </div>
             <div className="flex flex-wrap gap-8 mt-12 text-sm text-blue-200">
-              <div><span className="text-white font-bold text-lg">10K+</span><br />Contracts Analyzed</div>
-              <div><span className="text-white font-bold text-lg">94%</span><br />Risk Detection Rate</div>
-              <div><span className="text-white font-bold text-lg">&lt;3min</span><br />Average Review Time</div>
-              <div><span className="text-white font-bold text-lg">$0</span><br />Free Trial Available</div>
+              <div><span className="text-white font-bold text-lg">1-10</span><br />Risk Score Scale</div>
+              <div><span className="text-white font-bold text-lg">PDF/DOCX</span><br />Supported Formats</div>
+              <div><span className="text-white font-bold text-lg">&lt;3min</span><br />Analysis Time</div>
+              <div><span className="text-white font-bold text-lg">7-day</span><br />Free Trial</div>
             </div>
           </div>
         </div>
