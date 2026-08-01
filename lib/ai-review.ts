@@ -258,7 +258,7 @@ function parseReviewResponse(rawJson: string): ReviewResult {
 
     return {
       contractId: '',
-      summary: parsed.summary || 'No summary available.',
+      summary: String(parsed.summary || 'No summary available.'),
       overallScore: Number(parsed.overallScore) || 5,
       risks: ensureArray<Record<string, unknown>>(parsed.risks).map(normalizeRisk),
       recommendations: ensureArray<Record<string, unknown>>(parsed.recommendations).map(normalizeRecommendation),
