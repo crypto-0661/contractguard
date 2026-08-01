@@ -125,15 +125,32 @@ export async function analyzeContract(
   console.log(`[AI Review] Contract text length: ${contractText.length} chars`);
 
   let rawResponse: string;
+  let result: ReviewResult;
 
-  if (provider === 'anthropic') {
-    rawResponse = await analyzeWithClaude(contractText, model, industry);
-  } else {
-    rawResponse = await analyzeWithOpenAI(contractText, model, industry);
+  try {
+    if (provider === 'anthropic') {
+      rawResponse = await analyzeWithClaude(contractText, model, industry);
+    } else {
+      rawResponse = await analyzeWithOpenAI(contractText, model, industry);
+    }
+
+    result = parseReviewResponse(rawResponse);
+  } catch (firstError) {
+    // 首次失败（API异常或解析失败）→ 严格模式重试一次
+    console.error('[AI Review] First attempt failed, retrying in strict mode:', firstError);
+    try {
+      if (provider === 'anthropic') {
+        rawResponse = await analyzeWithClaude(contractText, model, industry, true);
+      } else {
+        rawResponse = await analyzeWithOpenAI(contractText, model, industry, true);
+      }
+      result = parseReviewResponse(rawResponse);
+    } catch (retryError) {
+      console.error('[AI Review] Retry also failed:', retryError);
+      console.error('[AI Review] Raw response:', (rawResponse || '').substring(0, 1000));
+      throw new Error('AI review failed after retry. Please try again.');
+    }
   }
-
-  // 解析 AI 返回的 JSON
-  const result = parseReviewResponse(rawResponse);
 
   // 验证结果完整性
   validateReviewResult(result);
@@ -148,19 +165,23 @@ export async function analyzeContract(
 async function analyzeWithOpenAI(
   contractText: string,
   model: string,
-  industry?: string
+  industry?: string,
+  strict = false
 ): Promise<string> {
   const openai = getOpenAIClient();
+
+  const strictNote = strict
+    ? '\n\nCRITICAL: Your previous output failed to parse as valid JSON. Respond with ONLY a single valid JSON object. No markdown fences, no code blocks, no explanations, no trailing commas.'
+    : '';
 
   const response = await openai.chat.completions.create({
     model,
     messages: [
       { role: 'system', content: SYSTEM_PROMPT },
-      { role: 'user', content: buildUserPrompt(contractText, industry) },
+      { role: 'user', content: buildUserPrompt(contractText, industry) + strictNote },
     ],
     temperature: 0.3, // 低温度以保证一致性
-    max_tokens: 4096,
-    response_format: { type: 'json_object' },
+    max_tokens: 8192, // 加大输出上限，避免 JSON 被截断
   });
 
   const content = response.choices[0]?.message?.content;
@@ -177,19 +198,24 @@ async function analyzeWithOpenAI(
 async function analyzeWithClaude(
   contractText: string,
   model: string,
-  industry?: string
+  industry?: string,
+  strict = false
 ): Promise<string> {
   const anthropic = getAnthropicClient();
 
+  const strictNote = strict
+    ? '\n\nCRITICAL: Your previous output failed to parse as valid JSON. Respond with ONLY a single valid JSON object. No markdown fences, no code blocks, no explanations, no trailing commas.'
+    : '';
+
   const response = await anthropic.messages.create({
     model,
-    max_tokens: 4096,
+    max_tokens: 8192,
     temperature: 0.3,
     system: SYSTEM_PROMPT,
     messages: [
       {
         role: 'user',
-        content: buildUserPrompt(contractText, industry),
+        content: buildUserPrompt(contractText, industry) + strictNote,
       },
     ],
   });
@@ -211,20 +237,24 @@ async function analyzeWithClaude(
  */
 function parseReviewResponse(rawJson: string): ReviewResult {
   try {
-    // 清理可能的markdown代码块标记
+    // 清理 markdown 代码块标记（```json / ```）
     let cleaned = rawJson.trim();
-    if (cleaned.startsWith('```json')) {
-      cleaned = cleaned.slice(7);
-    }
-    if (cleaned.startsWith('```')) {
-      cleaned = cleaned.slice(3);
-    }
-    if (cleaned.endsWith('```')) {
-      cleaned = cleaned.slice(0, -3);
-    }
-    cleaned = cleaned.trim();
+    cleaned = cleaned.replace(/^```(?:json)?\s*/i, '').replace(/```\s*$/, '').trim();
 
-    const parsed = JSON.parse(cleaned);
+    // 提取第一个 { 到最后一个 } 之间的内容（剥离任何前后多余文本）
+    const firstBrace = cleaned.indexOf('{');
+    const lastBrace = cleaned.lastIndexOf('}');
+    if (firstBrace !== -1 && lastBrace > firstBrace) {
+      cleaned = cleaned.substring(firstBrace, lastBrace + 1);
+    }
+
+    // 解析（首次失败时尝试移除尾逗号再解析）
+    let parsed: Record<string, unknown>;
+    try {
+      parsed = JSON.parse(cleaned);
+    } catch {
+      parsed = JSON.parse(cleaned.replace(/,\s*([}\]])/g, '$1'));
+    }
 
     return {
       contractId: '',
@@ -239,7 +269,7 @@ function parseReviewResponse(rawJson: string): ReviewResult {
     };
   } catch (error) {
     console.error('[AI Review] Failed to parse AI response:', error);
-    console.error('[AI Review] Raw response:', rawJson.substring(0, 500));
+    console.error('[AI Review] Raw response:', rawJson.substring(0, 1000));
     throw new Error('Failed to parse AI review response');
   }
 }
