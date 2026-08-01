@@ -6,6 +6,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
+import { authOptions } from '@/lib/auth';
 import { CREEM_PRODUCTS } from '@/lib/creem';
 
 export const dynamic = 'force-dynamic';
@@ -15,7 +16,7 @@ export async function POST(request: NextRequest) {
     const { productId, plan } = await request.json();
 
     // 从 session 获取用户信息
-    const session = await getServerSession();
+    const session = await getServerSession(authOptions);
     const userId = session?.user?.id || 'anonymous';
     const email = session?.user?.email || undefined;
 

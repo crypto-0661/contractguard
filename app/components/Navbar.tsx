@@ -7,6 +7,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import { useSession, signOut } from 'next-auth/react';
 
 interface NavbarProps {
   user?: {
@@ -16,10 +17,13 @@ interface NavbarProps {
   } | null;
 }
 
-export default function Navbar({ user }: NavbarProps) {
+export default function Navbar({ user: propUser }: NavbarProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const { data: session } = useSession();
 
+  // 优先用 session 里的用户，其次用传入的 user
+  const user = session?.user || propUser || null;
   const isLoggedIn = !!user;
 
   return (
@@ -103,13 +107,12 @@ export default function Navbar({ user }: NavbarProps) {
                       >
                         Settings
                       </Link>
-                      <Link
-                        href="/api/auth/signout"
-                        className="block px-4 py-2 text-sm text-red-600 hover:bg-red-50"
-                        onClick={() => setUserMenuOpen(false)}
+                      <button
+                        onClick={() => { setUserMenuOpen(false); signOut({ callbackUrl: '/' }); }}
+                        className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50"
                       >
                         Sign Out
-                      </Link>
+                      </button>
                     </div>
                   </>
                 )}
