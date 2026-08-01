@@ -96,6 +96,10 @@ export default function ContractUploader({
             if (e.lengthComputable) {
               const percent = Math.round((e.loaded / e.total) * 100);
               setProgress(percent);
+              // 文件上传完成但服务器仍在 AI 分析 → 切换到"处理中"状态
+              if (percent >= 100) {
+                setStatus('processing');
+              }
             }
           });
 
@@ -288,9 +292,18 @@ export default function ContractUploader({
           </div>
 
           {status === 'processing' && (
-            <p className="text-xs text-center text-gray-400 mt-4 animate-pulse">
-              AI is analyzing your contract. This may take a few minutes...
-            </p>
+            <div className="text-center mt-4">
+              <div className="flex items-center justify-center gap-2 text-sm text-brand-600 font-medium animate-pulse">
+                <svg className="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                </svg>
+                AI 正在分析你的合同
+              </div>
+              <p className="text-xs text-gray-400 mt-1">
+                通常需要 30-60 秒，请稍候…
+              </p>
+            </div>
           )}
         </div>
       )}

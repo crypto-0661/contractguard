@@ -290,7 +290,10 @@ function parseReviewResponse(rawJson: string): ReviewResult {
       missingClauses: ensureArray<Record<string, unknown>>(parsed.missingClauses).map(normalizeMissingClause),
       negotiationTips: ensureArray<Record<string, unknown>>(parsed.negotiationTips).map(normalizeNegotiationTip),
       industryCompliance: normalizeIndustryCompliance(parsed.industryCompliance),
-      riskDistribution: normalizeRiskDistribution(parsed.riskDistribution),
+      // 直接从风险列表计算类别分布，不依赖模型输出（模型常输出等级分布，类别对不上）
+      riskDistribution: computeRiskDistribution(
+        ensureArray<Record<string, unknown>>(parsed.risks).map(normalizeRisk)
+      ),
     };
   } catch (error) {
     console.error('[AI Review] Failed to parse AI response:', error);
@@ -423,6 +426,26 @@ function normalizeRiskDistribution(data: unknown): RiskDistribution {
     confidentiality: Number(d.confidentiality) || 0,
     non_compete: Number(d.non_compete) || 0,
   };
+}
+
+/**
+ * 从风险列表直接计算类别分布（可靠，不依赖模型输出）
+ */
+function computeRiskDistribution(risks: RiskClause[]): RiskDistribution {
+  const dist: RiskDistribution = {
+    liability: 0,
+    payment: 0,
+    termination: 0,
+    intellectual_property: 0,
+    confidentiality: 0,
+    non_compete: 0,
+  };
+  for (const risk of risks) {
+    if (risk.category in dist) {
+      dist[risk.category as keyof RiskDistribution] += 1;
+    }
+  }
+  return dist;
 }
 
 // ============================================================

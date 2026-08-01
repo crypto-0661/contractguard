@@ -90,7 +90,7 @@ export default function UploadPage() {
               </svg>
             </div>
             <h3 className="text-sm font-semibold text-gray-900 mb-1">Fast Analysis</h3>
-            <p className="text-xs text-gray-500">Most contracts analyzed in under 5 minutes. You&apos;ll get an email when done.</p>
+            <p className="text-xs text-gray-500">Most contracts analyzed in 30-60 seconds. Your risk report appears automatically.</p>
           </div>
           <div className="text-center p-6 bg-white rounded-xl border border-gray-100">
             <div className="w-10 h-10 bg-brand-100 rounded-lg flex items-center justify-center mx-auto mb-3">
