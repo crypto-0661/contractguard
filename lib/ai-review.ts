@@ -159,6 +159,7 @@ export async function analyzeContract(
       }
     } else {
       console.error('[AI Review] Attempt too slow, not retrying:', firstError);
+      console.error('[AI Review] Raw response (first 1000 chars):', rawResponse.substring(0, 1000));
       throw firstError instanceof Error ? firstError : new Error('AI review failed (too slow)');
     }
   }
