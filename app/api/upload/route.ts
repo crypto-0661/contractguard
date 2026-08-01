@@ -10,7 +10,11 @@ import { authOptions } from '@/lib/auth';
 import { v4 as uuidv4 } from 'uuid';
 import { supabaseAdmin } from '@/lib/db';
 import { extractTextFromBuffer, generateFileName, isValidFileType, isValidFileSize } from '@/lib/utils';
-import { createContract, updateContractStatus, checkContractLimit } from '@/lib/db';
+import { createContract, updateContractStatus, checkContractLimit, createReview } from '@/lib/db';
+import { analyzeContract } from '@/lib/ai-review';
+
+// Vercel Hobby 计划函数超时上限 60s：同步等待 DeepSeek 完成审阅
+export const maxDuration = 60;
 
 export async function POST(request: NextRequest) {
   try {
@@ -109,16 +113,30 @@ export async function POST(request: NextRequest) {
       fileType: file.type,
     });
 
-    // 异步提取文本并触发AI审阅（后台处理）
-    triggerAsyncReview(contract.id, buffer, file.type).catch((err) => {
-      console.error('[Upload] Async review trigger error:', err);
-    });
+    // 同步执行 AI 审阅（Vercel 会冻结后台异步任务，必须同步等待完成）
+    try {
+      await runReview(contract.id, buffer, file.type);
+    } catch (reviewError) {
+      console.error('[Upload] AI review failed:', reviewError);
+      try {
+        await updateContractStatus(contract.id, 'failed');
+      } catch {}
+      const message = reviewError instanceof Error ? reviewError.message : 'AI analysis failed';
+      return NextResponse.json(
+        {
+          error: `File uploaded, but AI analysis failed: ${message}`,
+          code: 'REVIEW_FAILED',
+          contractId: contract.id,
+        },
+        { status: 500 }
+      );
+    }
 
     return NextResponse.json({
       success: true,
       contractId: contract.id,
       fileUrl,
-      message: 'File uploaded successfully. Review is being processed.',
+      message: 'File uploaded and analyzed successfully.',
     });
   } catch (error) {
     console.error('[Upload] Unexpected error:', error);
@@ -130,34 +148,33 @@ export async function POST(request: NextRequest) {
 }
 
 /**
- * 异步触发AI审阅（不阻塞响应）
+ * 同步执行 AI 审阅（直接调用函数，不走内部 HTTP 回调，避免 Vercel 冻结）
  */
-async function triggerAsyncReview(contractId: string, buffer: Buffer, fileType: string) {
-  try {
-    // 更新状态为处理中
-    await updateContractStatus(contractId, 'processing');
+async function runReview(contractId: string, buffer: Buffer, fileType: string) {
+  // 更新状态为处理中
+  await updateContractStatus(contractId, 'processing');
 
-    // 提取文本
-    const { text, pageCount } = await extractTextFromBuffer(buffer, fileType);
+  // 提取文本
+  const { text } = await extractTextFromBuffer(buffer, fileType);
 
-    // 调用内部审阅API
-    const reviewUrl = new URL('/api/review', process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000');
-    const response = await fetch(reviewUrl.toString(), {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        contractId,
-        contractText: text,
-      }),
-    });
+  // 调用 AI 分析
+  const reviewResult = await analyzeContract(text);
 
-    if (!response.ok) {
-      throw new Error(`Review API returned ${response.status}`);
-    }
+  // 存储审阅结果
+  await createReview({
+    contractId,
+    summary: reviewResult.summary,
+    overallScore: reviewResult.overallScore,
+    risks: reviewResult.risks,
+    recommendations: reviewResult.recommendations,
+    missingClauses: reviewResult.missingClauses,
+    negotiationTips: reviewResult.negotiationTips,
+    industryCompliance: reviewResult.industryCompliance,
+    riskDistribution: reviewResult.riskDistribution,
+  });
 
-    console.log(`[Upload] Review completed for contract ${contractId}`);
-  } catch (error) {
-    console.error(`[Upload] Review failed for contract ${contractId}:`, error);
-    await updateContractStatus(contractId, 'failed');
-  }
+  // 更新合同状态和评分
+  await updateContractStatus(contractId, 'completed', reviewResult.overallScore);
+
+  console.log(`[Upload] Review completed for contract ${contractId}, score: ${reviewResult.overallScore}`);
 }
