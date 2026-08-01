@@ -94,9 +94,9 @@ export default function LandingPage() {
         </div>
         <div className="grid md:grid-cols-3 gap-8">
           {[
-            { plan: 'Starter', price: '$29', period: '/month', tag: '', features: ['10 contracts/month', 'Risk scoring', 'Clause highlights', 'Email support'], cta: 'Start Free Trial', href: '/app' },
-            { plan: 'Pro', price: '$79', period: '/month', tag: 'MOST POPULAR', features: ['50 contracts/month', 'Advanced risk analysis', 'Negotiation tips', 'Industry compliance check', 'Priority support'], cta: 'Start Free Trial', href: '/app', highlight: true },
-            { plan: 'Business', price: '$199', period: '/month', tag: '', features: ['Unlimited contracts', 'Custom compliance rules', 'Team collaboration', 'API access', 'Dedicated support'], cta: 'Contact Sales', href: '/app' },
+            { plan: 'Starter', price: '$29', period: '/month', tag: '', features: ['10 contracts/month', 'Risk scoring', 'Clause highlights', 'Email support'], cta: 'Start Free Trial', href: '/dashboard' },
+            { plan: 'Pro', price: '$79', period: '/month', tag: 'MOST POPULAR', features: ['50 contracts/month', 'Advanced risk analysis', 'Negotiation tips', 'Industry compliance check', 'Priority support'], cta: 'Start Free Trial', href: '/dashboard', highlight: true },
+            { plan: 'Business', price: '$199', period: '/month', tag: '', features: ['Unlimited contracts', 'Custom compliance rules', 'Team collaboration', 'API access', 'Dedicated support'], cta: 'Contact Sales', href: '/dashboard' },
           ].map((p, i) => (
             <div key={i} className={`rounded-2xl p-8 ${p.highlight ? 'bg-blue-600 text-white ring-4 ring-blue-200 scale-105' : 'bg-gray-50'}`}>
               {p.tag && <span className={`text-xs font-bold uppercase tracking-wider px-3 py-1 rounded-full mb-4 inline-block ${p.highlight ? 'bg-blue-500 text-white' : 'bg-blue-100 text-blue-700'}`}>{p.tag}</span>}
