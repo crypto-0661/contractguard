@@ -8,7 +8,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { analyzeContract } from '@/lib/ai-review';
-import { createReview, updateContractStatus, getReviewByContractId, getContractById } from '@/lib/db';
+import { createReview, updateContractStatus, getReviewByContractId, getContractById, supabaseAdmin } from '@/lib/db';
+import { extractTextFromBuffer } from '@/lib/utils';
 
 /** POST: 触发合同审阅 */
 export async function POST(request: NextRequest) {
@@ -119,13 +120,33 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
+    // 获取合同原文（从 Storage 下载并提取文本）
+    let contractText = '';
+    try {
+      if (contract.file_url) {
+        const { data: fileData, error: downloadError } = await supabaseAdmin.storage
+          .from('contracts')
+          .download(contract.file_url);
+
+        if (!downloadError && fileData) {
+          const buffer = Buffer.from(await fileData.arrayBuffer());
+          const extracted = await extractTextFromBuffer(buffer, contract.file_type || '');
+          contractText = extracted.text;
+        } else if (downloadError) {
+          console.error('[Review GET] Storage download error:', downloadError);
+        }
+      }
+    } catch (textError) {
+      console.error('[Review GET] Failed to extract contract text:', textError);
+    }
+
     // 获取审阅结果
     const review = await getReviewByContractId(contractId);
 
     if (!review) {
       return NextResponse.json({
         contractName: contract.file_name,
-        contractText: '',
+        contractText,
         review: null,
         status: contract.status,
         message: 'Review is still being processed. Please check back shortly.',
@@ -134,6 +155,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({
       contractName: contract.file_name,
+      contractText,
       review: {
         contractId: review.contract_id,
         summary: review.summary,

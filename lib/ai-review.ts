@@ -87,7 +87,15 @@ IMPORTANT: Return ONLY valid JSON. No markdown fences, no explanations. The JSON
   "riskDistribution": {...}
 }
 
-Keep the output CONCISE to ensure fast response: maximum 5 risk items, 3 recommendations, 3 missing clauses, and 3 negotiation tips. Keep every text field to 1-2 sentences (under 200 characters each). Do not pad the response.`;
+Keep the output CONCISE to ensure fast response: maximum 5 risk items, 3 recommendations, 3 missing clauses, and 3 negotiation tips. Keep every text field to 1-2 sentences (under 200 characters each). Do not pad the response.
+
+Exact field schemas for each list item (use these exact key names):
+- risks: [{"category":"liability|payment|termination|intellectual_property|confidentiality|non_compete","level":"high|medium|low","title":"Short title","section":"Section X","lineNumber":0,"originalText":"quote up to 200 chars","problem":"plain-English problem","suggestion":"what to ask for","suggestedRevision":"revised clause text"}]
+- recommendations: [{"clauseRef":"Section X","priority":"high|medium|low","action":"action verb phrase","detail":"one sentence"}]
+- missingClauses: [{"clauseName":"Name of missing clause","importance":"high|medium|low","description":"why it matters","recommendedLanguage":"suggested clause text"}]
+- negotiationTips: [{"category":"topic","strategy":"one-sentence strategy","talkingPoints":["point 1","point 2"],"fallbackPosition":"fallback stance"}]
+- industryCompliance: {"industry":"...","standards":["..."],"compliant":true,"issues":["..."]}
+- riskDistribution: {"high":0,"medium":0,"low":0}`;
 
 /**
  * 用户提示词模板
@@ -351,7 +359,7 @@ function normalizeRecommendation(rec: Record<string, unknown>, index: number): R
 function normalizeMissingClause(clause: Record<string, unknown>, index: number): MissingClause {
   return {
     id: `missing-${index}-${Date.now()}`,
-    clauseName: String(clause.clauseName || 'Unnamed clause'),
+    clauseName: String(clause.clauseName || clause.name || clause.clause || 'Unnamed clause'),
     importance: (['high', 'medium', 'low', 'info'] as const).includes(clause.importance as never)
       ? (clause.importance as MissingClause['importance'])
       : 'medium',
@@ -363,12 +371,14 @@ function normalizeMissingClause(clause: Record<string, unknown>, index: number):
 function normalizeNegotiationTip(tip: Record<string, unknown>, index: number): NegotiationTip {
   return {
     id: `tip-${index}-${Date.now()}`,
-    category: String(tip.category || 'general'),
-    strategy: String(tip.strategy || ''),
+    category: String(tip.category || tip.type || 'general'),
+    strategy: String(tip.strategy || tip.content || tip.text || tip.tip || ''),
     talkingPoints: Array.isArray(tip.talkingPoints)
       ? tip.talkingPoints.map(String)
-      : [],
-    fallbackPosition: String(tip.fallbackPosition || ''),
+      : Array.isArray(tip.points)
+        ? tip.points.map(String)
+        : [],
+    fallbackPosition: String(tip.fallbackPosition || tip.fallback || ''),
   };
 }
 
